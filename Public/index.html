@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>画像分析ツール</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>画像分析</h1>
+  
+  <div id="pasteArea">
+    画像を貼り付けるかファイルを選択
+    <div id="previews"></div>
+    <button id="resetImagesBtn" type="button">リセット</button>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" multiple>
+  <textarea id="promptInput" rows="3" placeholder="指示文（例: この画像の内容を説明してください）"></textarea>  <button  id="runBtn" type="button" onclick="analyzeImageDemo()">Run(Ctrl+Enter)</button>
+  <div id="result">ーーーこちらに結果が出力されますーーー</div>
+
+  <script>
+    let imagesBase64 = [];
+
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        analyzeImage();
+      }
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const files = e.target.files;
+      imagesBase64 = [];
+      if (files.length === 0) return;
+      for (const file of files) {
+        convertToBase64(file);
+      }
+    });
+
+    document.getElementById('pasteArea').addEventListener('paste', function(e) {
+      const items = e.clipboardData.items;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          convertToBase64(file);
+        }
+      }
+    });
+
+    function convertToBase64(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagesBase64.push(e.target.result);
+        updatePreviews();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updatePreviews() {
+      const previewsDiv = document.getElementById('previews');
+      previewsDiv.innerHTML = '';
+      imagesBase64.forEach((img, idx) => {
+        const imageElem = document.createElement('img');
+        imageElem.src = img;
+        imageElem.style.maxWidth = '200px';
+        imageElem.style.margin = '5px';
+        previewsDiv.appendChild(imageElem);
+      });
+    }
+
+    async function analyzeImageDemo() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '解析中...';
+
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      resultDiv.innerHTML = `
+    画像1の結果: これは、赤く染まった夕焼け空を背景に、シルエットになった子供が丘の上から景色を眺めている写真です。空は鮮やかな赤とオレンジの層が広がり、ドラマチックで美しい雰囲気を醸し出しています。遠くには山々の影が見え、静かな自然の風景が広がっています。<br><br>
+    画像2の結果: この画像には、模型の製作スペースが描かれています。中央には大きなロボットのプラモデルがあり、非常に詳細に作り込まれています。その隣で人がプラモデルのパーツを組み立てているようです。作業テーブルの上には、プラスチックのランナーや工具が並んでいます。背景には、完成した別のロボット模型が棚に展示されています。部屋全体が明るく照らされ、趣味の作業を楽しんでいる雰囲気が伝わってきます。<br><br>
+    画像3の結果: この画像には、未来的な都市の街並みの中を走行する自動運転車が描かれています。車にはデジタルディスプレイが搭載され、周囲にはさまざまなテクノロジー関連のホログラムやアイコンが浮かんでいます。ビルが立ち並ぶ大通りで、人々が歩いている様子も見られます。全体的にハイテクで近未来的な雰囲気が表現されています。<br><br>
+    画像4の結果: この画像は、夕焼けや朝焼けの空を捉えたもので、雲が赤やオレンジ色に染まっています。雲は広がりを見せ、部分的には暗い影となっており、美しい色のグラデーションを作り出しています。空全体が鮮やかな色合いで照らされ、ドラマチックな雰囲気を醸し出しています。
+      `;
+    }
+
+    document.getElementById('resetImagesBtn').onclick = function() {
+      imagesBase64 = [];
+      updatePreviews();
+    };
+  </script>
+</body>
+</html>
